@@ -121,7 +121,10 @@ const FloodGame = ({ onBack }) => {
   const [gameState, setGameState] = useState("intro");
   const [collectedTrash, setCollectedTrash] = useState(0);
   const [totalTrash] = useState(25);
+  const [showFullscreenWarning, setShowFullscreenWarning] = useState(false);
+  const [fullscreenExitReason, setFullscreenExitReason] = useState("");
   const hasCompletionAlertedRef = useRef(false);
+  const gamePlayingRef = useRef(false);
 
   const dragStateRef = useRef({
     isDragging: false,
@@ -138,6 +141,57 @@ const FloodGame = ({ onBack }) => {
   const characterReactStartRef = useRef(0);
 
   const imagesRef = useRef({});
+
+  // Fungsi untuk request fullscreen
+  const requestFullscreen = async () => {
+    const element = document.documentElement;
+    try {
+      // Skip jika sudah fullscreen
+      if (isFullscreenActive()) {
+        return;
+      }
+
+      if (element.requestFullscreen) {
+        await element.requestFullscreen();
+      } else if (element.webkitRequestFullscreen) {
+        await element.webkitRequestFullscreen();
+      } else if (element.mozRequestFullScreen) {
+        await element.mozRequestFullScreen();
+      } else if (element.msRequestFullscreen) {
+        await element.msRequestFullscreen();
+      }
+    } catch (error) {
+      // Abaikan error jika sudah fullscreen atau permission denied
+      if (error.name === "NotAllowedError") {
+        console.log("Fullscreen request blocked by user or browser");
+      } else if (error.name === "TypeError") {
+        console.log("Fullscreen request failed:", error.message);
+      }
+    }
+  };
+
+  // Fungsi untuk check apakah sedang fullscreen
+  const isFullscreenActive = () => {
+    return (
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+  };
+
+  // Fungsi untuk exit fullscreen
+  const exitFullscreen = () => {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  };
 
   const triggerCharacterReaction = () => {
     const now = Date.now();
@@ -342,7 +396,6 @@ const FloodGame = ({ onBack }) => {
       135,
       165 * Math.min(width / 1200, height / 800),
     );
-
 
     gameStateRef.current.basePersonWidth = personWidth;
 
@@ -1332,6 +1385,17 @@ const FloodGame = ({ onBack }) => {
       animateFloodIntro();
     }
 
+    // Set gamePlayingRef saat game sedang dimainkan atau saat intro animation
+    if (gameState === "intro" || gameState === "playing") {
+      gamePlayingRef.current = true;
+      // Request fullscreen jika belum fullscreen
+      if (!isFullscreenActive()) {
+        requestFullscreen();
+      }
+    } else if (gameState === "completed") {
+      gamePlayingRef.current = false;
+    }
+
     canvas.addEventListener("mousedown", handleMouseDown);
     canvas.addEventListener("mousemove", handleMouseMove);
     canvas.addEventListener("mouseup", handleMouseUp);
@@ -1423,6 +1487,8 @@ const FloodGame = ({ onBack }) => {
     if (gameState === "completed" && !hasCompletionAlertedRef.current) {
       hasCompletionAlertedRef.current = true;
       window.alert("Terima kasih sudah membersihkan sampah");
+      // Exit fullscreen sebelum kembali
+      exitFullscreen();
       if (typeof onBack === "function") {
         onBack();
       }
@@ -1507,6 +1573,96 @@ const FloodGame = ({ onBack }) => {
     });
   }, []);
 
+  // Clear fullscreen warning jika fullscreen berhasil di-request kembali
+  useEffect(() => {
+    if (isFullscreenActive() && showFullscreenWarning) {
+      setShowFullscreenWarning(false);
+      setFullscreenExitReason("");
+    }
+  }, [showFullscreenWarning]);
+
+  // Fullscreen detection dan warning
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      // Jika sedang bermain (intro atau playing) dan keluar dari fullscreen, tampilkan warning dan force re-enter
+      if (
+        gamePlayingRef.current &&
+        !isFullscreenActive() &&
+        (gameState === "intro" || gameState === "playing")
+      ) {
+        // Jika fullscreenExitReason belum diset (tidak dari ESC), set ke "fullscreen"
+        setShowFullscreenWarning(true);
+        if (fullscreenExitReason !== "escape") {
+          setFullscreenExitReason("fullscreen");
+        }
+        // Otomatis request fullscreen kembali setelah 500ms
+        setTimeout(() => {
+          requestFullscreen();
+        }, 500);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      // Detect Escape key saat fullscreen aktif
+      if (
+        e.key === "Escape" &&
+        gamePlayingRef.current &&
+        (gameState === "intro" || gameState === "playing") &&
+        isFullscreenActive()
+      ) {
+        // Tandai bahwa exit fullscreen dari ESC
+        setFullscreenExitReason("escape");
+        // Catatan: e.preventDefault() tidak bekerja untuk ESC dalam fullscreen
+        // Browser akan keluar dari fullscreen, dan handleFullscreenChange akan menangani sisanya
+      }
+    };
+
+    const handleBeforeUnload = (e) => {
+      // Warning saat menutup tab/browser selama game berlangsung (belum selesai)
+      if (
+        gamePlayingRef.current &&
+        (gameState === "intro" || gameState === "playing")
+      ) {
+        e.preventDefault();
+        e.returnValue = "Anda masih bermain! Yakin ingin keluar?";
+        return "Anda masih bermain! Yakin ingin keluar?";
+      }
+    };
+
+    // Jika game sudah selesai, allow exit fullscreen
+    if (gameState === "completed") {
+      if (document.exitFullscreen && isFullscreenActive()) {
+        // Game selesai, user bisa keluar dari fullscreen
+      }
+      return;
+    }
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("msfullscreenchange", handleFullscreenChange);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener(
+        "msfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [gameState]);
+
   return (
     <StyledContainer>
       <canvas
@@ -1541,6 +1697,40 @@ const FloodGame = ({ onBack }) => {
         <ButtonContainer>
           <RestartButton onClick={resetGame}>Ulangi Permainan</RestartButton>
         </ButtonContainer>
+      )}
+
+      {/* Fullscreen Warning Modal */}
+      {showFullscreenWarning && (
+        <FullscreenWarningOverlay>
+          <FullscreenWarningModal>
+            <WarningTitle>⚠️ Jangan Curang!</WarningTitle>
+            <WarningMessage>
+              {fullscreenExitReason === "escape"
+                ? "Anda tidak bisa keluar dari mode fullscreen dengan menekan ESC!"
+                : "Anda tidak bisa keluar dari mode fullscreen!"}
+            </WarningMessage>
+            <WarningDescription>
+              Fullscreen diperlukan untuk bermain game ini. Selesaikan permainan
+              terlebih dahulu, kumpulkan semua sampah untuk menyelamatkan
+              lingkungan! Anda otomatis dikembalikan ke fullscreen.
+            </WarningDescription>
+            <ButtonGroup>
+              <ExitButton
+                onClick={() => {
+                  setShowFullscreenWarning(false);
+                  gamePlayingRef.current = false;
+                  // Exit fullscreen sebelum kembali
+                  exitFullscreen();
+                  if (typeof onBack === "function") {
+                    onBack();
+                  }
+                }}
+              >
+                ✕ Keluar Permainan
+              </ExitButton>
+            </ButtonGroup>
+          </FullscreenWarningModal>
+        </FullscreenWarningOverlay>
       )}
     </StyledContainer>
   );
@@ -1637,6 +1827,168 @@ const RestartButton = styled.button`
     padding: 10px 20px;
     font-size: 14px;
     box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+  }
+`;
+
+const FullscreenWarningOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const FullscreenWarningModal = styled.div`
+  background: white;
+  border: 4px solid #000;
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s ease;
+  text-align: center;
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(50px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    padding: 20px;
+    border-radius: 15px;
+  }
+`;
+
+const WarningTitle = styled.h2`
+  font-size: 28px;
+  font-weight: 900;
+  color: #d32f2f;
+  margin: 0 0 15px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  @media (max-width: 640px) {
+    font-size: 22px;
+  }
+`;
+
+const WarningMessage = styled.p`
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+
+  @media (max-width: 640px) {
+    font-size: 16px;
+  }
+`;
+
+const WarningDescription = styled.p`
+  font-size: 14px;
+  color: #555;
+  margin: 0 0 25px 0;
+  line-height: 1.6;
+
+  @media (max-width: 640px) {
+    font-size: 13px;
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 10px;
+  }
+`;
+
+const ResumeButton = styled.button`
+  flex: 0 1 auto;
+  min-width: 180px;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  border: 2px solid #000;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translate(0, 0);
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+  }
+
+  @media (max-width: 640px) {
+    min-width: 100%;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+`;
+
+const ExitButton = styled.button`
+  flex: 0 1 auto;
+  min-width: 180px;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+  border: 2px solid #000;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translate(0, 0);
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+  }
+
+  @media (max-width: 640px) {
+    min-width: 100%;
+    padding: 10px 16px;
+    font-size: 14px;
   }
 `;
 

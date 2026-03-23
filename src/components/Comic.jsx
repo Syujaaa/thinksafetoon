@@ -4,6 +4,82 @@ import Button from "./button";
 
 const Comic = ({ onBack }) => {
   const [selectedComic, setSelectedComic] = useState(null);
+  const [showFullscreenRequest, setShowFullscreenRequest] = useState(false);
+  const [pendingComic, setPendingComic] = useState(null);
+
+  // Check if fullscreen is active
+  const isFullscreenActive = () => {
+    return (
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+  };
+
+  const exitFullscreen = () => {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  };
+
+  // Request fullscreen
+  const requestFullscreen = async () => {
+    const element = document.documentElement;
+    try {
+      if (element.requestFullscreen) {
+        await element.requestFullscreen();
+      } else if (element.webkitRequestFullscreen) {
+        await element.webkitRequestFullscreen();
+      } else if (element.mozRequestFullScreen) {
+        await element.mozRequestFullScreen();
+      } else if (element.msRequestFullscreen) {
+        await element.msRequestFullscreen();
+      }
+    } catch (error) {
+      console.log("Fullscreen request failed:", error);
+    }
+  };
+
+  const handleComicSelect = async (comicId) => {
+    // Jika sudah fullscreen, langsung main
+    if (isFullscreenActive()) {
+      setSelectedComic(comicId);
+      setShowFullscreenRequest(false);
+      return;
+    }
+
+    // Jika belum fullscreen, request fullscreen
+    setPendingComic(comicId);
+    setShowFullscreenRequest(true);
+    await requestFullscreen();
+
+    // Tunggu sebentar untuk memastikan fullscreen sudah aktif
+    setTimeout(() => {
+      if (isFullscreenActive()) {
+        setSelectedComic(comicId);
+        setShowFullscreenRequest(false);
+      }
+    }, 500);
+  };
+
+  const handleFullscreenOk = () => {
+    if (isFullscreenActive() && pendingComic) {
+      setSelectedComic(pendingComic);
+      setShowFullscreenRequest(false);
+      setPendingComic(null);
+    } else {
+      alert(
+        "Fullscreen diperlukan untuk bermain! Silakan aktifkan fullscreen terlebih dahulu.",
+      );
+    }
+  };
 
   const comics = [
     {
@@ -22,7 +98,10 @@ const Comic = ({ onBack }) => {
           <FloodGame onBack={() => setSelectedComic(null)} />
         )}
         <button
-          onClick={() => setSelectedComic(null)}
+          onClick={() => {
+            setSelectedComic(null);
+            exitFullscreen();
+          }}
           className="
             fixed top-5 right-5 md:top-6 md:right-6 z-50
             px-4 md:px-6 py-2 md:py-3
@@ -128,7 +207,7 @@ const Comic = ({ onBack }) => {
           {comics.map((comic) => (
             <div
               key={comic.id}
-              onClick={() => !comic.disabled && setSelectedComic(comic.id)}
+              onClick={() => !comic.disabled && handleComicSelect(comic.id)}
               className={`
                 group
                 ${comic.disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
@@ -172,7 +251,7 @@ const Comic = ({ onBack }) => {
                   {!comic.disabled && (
                     <div className="flex justify-center">
                       <button
-                        onClick={() => setSelectedComic(comic.id)}
+                        onClick={() => handleComicSelect(comic.id)}
                         className="
                           px-6 sm:px-8 py-3 sm:py-4
                           bg-gradient-to-r from-blue-500 to-blue-600
@@ -238,6 +317,45 @@ const Comic = ({ onBack }) => {
           </p>
         </div>
       </div>
+
+      {/* Fullscreen Request Modal */}
+      {showFullscreenRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white border-4 border-black rounded-2xl p-8 max-w-md w-full shadow-lg">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">🖥️</div>
+              <h2 className="text-2xl font-black text-black mb-2 uppercase">
+                Fullscreen Diperlukan
+              </h2>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Untuk pengalaman bermain yang optimal, permainan ini memerlukan
+                mode fullscreen.
+                {isFullscreenActive()
+                  ? " Anda sudah masuk fullscreen, klik tombol di bawah untuk melanjutkan!"
+                  : " Silakan tekan tombol di bawah untuk mengaktifkan fullscreen."}
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-center flex-wrap">
+              <button
+                onClick={handleFullscreenOk}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-lg border-2 border-black cursor-pointer shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all hover:shadow-[6px_6px_0px_rgba(0,0,0,0.2)] active:shadow-[2px_2px_0px_rgba(0,0,0,0.2)]"
+              >
+                ✓ Lanjutkan
+              </button>
+              <button
+                onClick={() => {
+                  setShowFullscreenRequest(false);
+                  setPendingComic(null);
+                }}
+                className="px-6 py-3 bg-gray-400 hover:bg-gray-500 text-white font-bold rounded-lg border-2 border-black cursor-pointer shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all hover:shadow-[6px_6px_0px_rgba(0,0,0,0.2)] active:shadow-[2px_2px_0px_rgba(0,0,0,0.2)]"
+              >
+                ✕ Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes pulse-slow {
