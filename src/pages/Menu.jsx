@@ -1,13 +1,23 @@
 import Button from "../components/button";
 import Kredit from "../components/kredit";
+import Comic from "../components/Comic";
 import { useState } from "react";
 
 export default function Menu() {
   const [showKredit, setShowKredit] = useState(false);
+  const [showComic, setShowComic] = useState(false);
 
   const handleKreditClick = () => {
     setShowKredit(true);
   };
+
+  const handleComicClick = () => {
+    setShowComic(true);
+  };
+
+  if (showComic) {
+    return <Comic onBack={() => setShowComic(false)} />;
+  }
   return (
     <div
       className="
@@ -19,7 +29,6 @@ export default function Menu() {
       py-8
     "
     >
-      {/* Background comic dots */}
       <div
         className="absolute inset-0 opacity-10 pointer-events-none
         bg-[radial-gradient(#000_2px,transparent_2px)]
@@ -27,21 +36,17 @@ export default function Menu() {
         animate-pulse-slow"
       ></div>
 
-      {/* Comic-style burst accents */}
       <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-300 rounded-full mix-blend-multiply opacity-20 blur-xl"></div>
       <div className="absolute bottom-10 right-10 w-40 h-40 bg-red-300 rounded-full mix-blend-multiply opacity-20 blur-xl"></div>
       <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-blue-300 rounded-full mix-blend-multiply opacity-15 blur-lg"></div>
 
-      {/* Title section with comic-style elements */}
       <div className="relative z-10 mb-10 text-center">
         <div className="relative inline-block mb-6">
-          {/* Main title with layered effects */}
           <div className="relative">
-            {/* Shadow layer */}
             <div className="absolute -inset-2 bg-black transform rotate-3 translate-x-2 translate-y-2 rounded-xl"></div>
-            {/* Yellow accent layer */}
+
             <div className="absolute -inset-1 bg-yellow-400 transform rotate-1 rounded-lg"></div>
-            {/* Main title */}
+
             <h1
               className="
               relative
@@ -60,7 +65,6 @@ export default function Menu() {
             </h1>
           </div>
 
-          {/* Comic exclamation elements */}
           <div className="absolute -top-4 -right-4 w-12 h-12 bg-red-500 border-3 border-black rounded-full flex items-center justify-center z-20">
             <span className="text-white font-black text-lg">!</span>
           </div>
@@ -69,7 +73,6 @@ export default function Menu() {
           </div>
         </div>
 
-        {/* Subtitle with comic bubble */}
         <div className="relative inline-block max-w-lg">
           <div
             className="
@@ -114,13 +117,11 @@ export default function Menu() {
         transition-all duration-300
       "
       >
-        {/* Comic panel corners */}
         <div className="absolute -top-4 -left-4 w-8 h-8 bg-black rounded-full border-4 border-white"></div>
         <div className="absolute -top-4 -right-4 w-8 h-8 bg-black rounded-full border-4 border-white"></div>
         <div className="absolute -bottom-4 -left-4 w-8 h-8 bg-black rounded-full border-4 border-white"></div>
         <div className="absolute -bottom-4 -right-4 w-8 h-8 bg-black rounded-full border-4 border-white"></div>
 
-        {/* Panel header with comic style */}
         <div className="mb-2">
           <div className="inline-flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-yellow-400 to-orange-400 border-3 border-black rounded-full transform -rotate-1">
             <div className="w-6 h-6 bg-white border-2 border-black rounded-full flex items-center justify-center">
@@ -135,7 +136,6 @@ export default function Menu() {
           </div>
         </div>
 
-        {/* Panel description */}
         <div className="px-4">
           <p className="text-gray-600 text-sm md:text-base leading-relaxed">
             Jelajahi aplikasi komik interaktif berbasis mitigasi bencana yang
@@ -144,9 +144,7 @@ export default function Menu() {
           </p>
         </div>
 
-        {/* Buttons container - Centered with spacing */}
         <div className="flex flex-col gap-6 mt-4">
-          {/* Button with comic-style label */}
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-2 mb-1">
               <div className="w-2 h-2 bg-black rounded-full"></div>
@@ -155,7 +153,7 @@ export default function Menu() {
               </div>
               <div className="w-2 h-2 bg-black rounded-full"></div>
             </div>
-            <Button>Komik</Button>
+            <Button onClick={handleComicClick}>Komik</Button>
           </div>
 
           <div className="space-y-1">
@@ -220,7 +218,6 @@ export default function Menu() {
         </div>
       </div>
 
-      {/* Add custom animations */}
       <style>{`
         @keyframes pulse-slow {
           0%,
