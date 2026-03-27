@@ -10,6 +10,8 @@ const FireGame = ({
 }) => {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState("intro");
+  const [hazardImagesReady, setHazardImagesReady] = useState(false);
+  const hazardImagesReadyRef = useRef(false);
   const [collectedItems, setCollectedItems] = useState([]);
   const [totalHazard, setTotalHazard] = useState(0);
   const [showGameWon, setShowGameWon] = useState(false);
@@ -50,7 +52,6 @@ const FireGame = ({
     {
       id: "cigarette",
       name: "Puntung Rokok",
-      emoji: "🚬",
       image: "/components/2/cigarette.png",
       points: 2,
       color: "#D2691E",
@@ -59,7 +60,6 @@ const FireGame = ({
     {
       id: "matches",
       name: "Korek Api",
-      emoji: "🔥",
       image: "/components/2/matches.png",
       points: 3,
       color: "#FF6347",
@@ -68,7 +68,6 @@ const FireGame = ({
     {
       id: "fire",
       name: "Api Unggun",
-      emoji: "🏕️",
       image: "/components/2/bonfire.png",
       points: 5,
       color: "#FF4500",
@@ -281,7 +280,7 @@ const FireGame = ({
         id: itemId++,
         type: hazardType.id,
         name: hazardType.name,
-        emoji: hazardType.emoji,
+        image: hazardType.image,
         points: hazardType.points,
         color: hazardType.color,
         x: gridX,
@@ -340,7 +339,7 @@ const FireGame = ({
         id: itemId++,
         type: hazardType.id,
         name: hazardType.name,
-        emoji: hazardType.emoji,
+        image: hazardType.image,
         points: hazardType.points,
         color: hazardType.color,
         x,
@@ -414,7 +413,7 @@ const FireGame = ({
             id: itemId++,
             type: fireType.id,
             name: fireType.name,
-            emoji: fireType.emoji,
+            image: fireType.image,
             points: fireType.points,
             color: fireType.color,
             x: fallbackX,
@@ -448,7 +447,7 @@ const FireGame = ({
             id: itemId++,
             type: fireType.id,
             name: fireType.name,
-            emoji: fireType.emoji,
+            image: fireType.image,
             points: fireType.points,
             color: fireType.color,
             x: Math.max(0, Math.min(fallbackX, width - itemSize)),
@@ -544,7 +543,9 @@ const FireGame = ({
           // Fallback ke random jika tidak dapat posisi valid.
           const baseHazard =
             hazardOnlyItems.length > 0
-              ? hazardOnlyItems[Math.floor(Math.random() * hazardOnlyItems.length)]
+              ? hazardOnlyItems[
+                  Math.floor(Math.random() * hazardOnlyItems.length)
+                ]
               : null;
           const near = trySpawnSafeNearHazard(baseHazard, safeType);
 
@@ -772,11 +773,19 @@ const FireGame = ({
           item.height,
         );
 
-        // Emoji - simpler rendering
-        ctx.font = "32px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(item.emoji, 0, 0);
+        // Safe items boleh pakai emoji, hazard items tidak.
+        if (item.isSafe) {
+          ctx.font = "32px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(item.emoji, 0, 0);
+        } else {
+          ctx.fillStyle = "rgba(255,255,255,0.9)";
+          ctx.font = "bold 22px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("!", 0, 0);
+        }
       }
 
       // Border dihilangkan
@@ -1092,25 +1101,40 @@ const FireGame = ({
   };
 
   useEffect(() => {
-    calculateDimensions();
-    initializeItems();
-    requestDraw();
+    hazardImagesReadyRef.current = hazardImagesReady;
+  }, [hazardImagesReady]);
 
-    // Preload images
-    hazardItemsData.forEach((item) => {
-      if (item.image) {
-        const img = new Image();
-        img.src = item.image;
-        img.onload = () => {
+  useEffect(() => {
+    calculateDimensions();
+    setHazardImagesReady(false);
+
+    // Preload images (wait until all hazard images loaded)
+    const preloadPromises = hazardItemsData
+      .filter((item) => item.image)
+      .map((item) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          // Put it in cache immediately so lookups are stable.
           gameStateRef.current.imageCache[item.id] = img;
-        };
-      }
+
+          img.onload = () => resolve({ ok: true, id: item.id });
+          img.onerror = () => resolve({ ok: false, id: item.id });
+          img.src = item.image;
+        });
+      });
+
+    Promise.all(preloadPromises).then(() => {
+      setHazardImagesReady(true);
+      initializeItems();
+      requestDraw();
     });
 
     const handleResize = () => {
       calculateDimensions();
-      initializeItems();
-      requestDraw();
+      if (hazardImagesReadyRef.current) {
+        initializeItems();
+        requestDraw();
+      }
     };
 
     window.addEventListener("resize", handleResize);
@@ -1255,7 +1279,14 @@ const FireGame = ({
               <HazardList>
                 {hazardItemsData.map((item) => (
                   <HazardItem key={item.id}>
-                    <span>{item.emoji}</span>
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      width={32}
+                      height={32}
+                      draggable={false}
+                      style={{ objectFit: "contain" }}
+                    />
                     <div>
                       <strong>{item.name}</strong>
                       <p>+{item.points} poin bahaya</p>
@@ -1272,8 +1303,12 @@ const FireGame = ({
                 </ul>
               </Tips>
             </IntroDescription>
-            <StartButton onClick={() => setGameState("playing")}>
-              🎮 MULAI BERMAIN
+            <StartButton
+              onClick={() => setGameState("playing")}
+              disabled={!hazardImagesReady}
+              aria-disabled={!hazardImagesReady}
+            >
+              {hazardImagesReady ? "🎮 MULAI BERMAIN" : "⏳ MEMUAT GAMBAR..."}
             </StartButton>
           </IntroModal>
         </IntroOverlay>
@@ -1322,7 +1357,14 @@ const FireGame = ({
               <PreviewItems>
                 {collectedItems.map((item, idx) => (
                   <PreviewItem key={idx}>
-                    <span>{item.emoji}</span>
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      width={28}
+                      height={28}
+                      draggable={false}
+                      style={{ objectFit: "contain" }}
+                    />
                   </PreviewItem>
                 ))}
               </PreviewItems>
@@ -1351,7 +1393,15 @@ const FireGame = ({
               <QuizCollectedList>
                 {collectedItems.map((item) => (
                   <QuizCollectedItem key={item.id}>
-                    <span className="emoji">{item.emoji}</span>
+                    <img
+                      className="emoji"
+                      src={item.image}
+                      alt={item.name}
+                      width={24}
+                      height={24}
+                      draggable={false}
+                      style={{ objectFit: "contain" }}
+                    />
                     <span className="name">{item.name}</span>
                     <span className="points">+{item.points}</span>
                   </QuizCollectedItem>
@@ -1629,6 +1679,14 @@ const StartButton = styled.button`
   &:active {
     transform: translate(0, 0);
     box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+  }
+
+  &:disabled,
+  &[aria-disabled="true"] {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.22);
   }
 `;
 
