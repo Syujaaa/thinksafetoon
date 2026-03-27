@@ -116,7 +116,12 @@ const drawSpeechBubble = (ctx, text, x, y, width, height, tailX, tailY) => {
   ctx.restore();
 };
 
-const FloodGame = ({ onBack }) => {
+const FloodGame = ({
+  onBack,
+  onScoreIncrement,
+  onScoreDecrement,
+  score = 0,
+}) => {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState("intro");
   const [collectedTrash, setCollectedTrash] = useState(0);
@@ -1014,6 +1019,11 @@ const FloodGame = ({ onBack }) => {
     const newCount = collectedTrash + 1;
     setCollectedTrash(newCount);
 
+    // Increment score when trash is collected
+    if (onScoreIncrement) {
+      onScoreIncrement();
+    }
+
     // Animate trash ke bin
     gsap.to(item, {
       x: fixedBinX + fixedBinSize / 2 - item.width / 2,
@@ -1590,6 +1600,10 @@ const FloodGame = ({ onBack }) => {
         !isFullscreenActive() &&
         (gameState === "intro" || gameState === "playing")
       ) {
+        // Kurangi score saat fullscreen diexit
+        if (onScoreDecrement) {
+          onScoreDecrement(15);
+        }
         // Jika fullscreenExitReason belum diset (tidak dari ESC), set ke "fullscreen"
         setShowFullscreenWarning(true);
         if (fullscreenExitReason !== "escape") {
@@ -1599,6 +1613,20 @@ const FloodGame = ({ onBack }) => {
         setTimeout(() => {
           requestFullscreen();
         }, 500);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      // Jika tab menjadi hidden (user switch tab) saat game berlangsung
+      if (
+        document.hidden &&
+        gamePlayingRef.current &&
+        (gameState === "intro" || gameState === "playing")
+      ) {
+        // Kurangi score saat switch tab
+        if (onScoreDecrement) {
+          onScoreDecrement(10);
+        }
       }
     };
 
@@ -1641,6 +1669,7 @@ const FloodGame = ({ onBack }) => {
     document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
     document.addEventListener("mozfullscreenchange", handleFullscreenChange);
     document.addEventListener("msfullscreenchange", handleFullscreenChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     document.addEventListener("keydown", handleKeyDown);
     window.addEventListener("beforeunload", handleBeforeUnload);
 
@@ -1658,10 +1687,11 @@ const FloodGame = ({ onBack }) => {
         "msfullscreenchange",
         handleFullscreenChange,
       );
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       document.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [gameState]);
+  }, [gameState, onScoreDecrement]);
 
   return (
     <StyledContainer>
@@ -1703,22 +1733,35 @@ const FloodGame = ({ onBack }) => {
       {showFullscreenWarning && (
         <FullscreenWarningOverlay>
           <FullscreenWarningModal>
-            <WarningTitle>⚠️ Jangan Curang!</WarningTitle>
+            <WarningTitle>⚠️ Fokus Diperlukan!</WarningTitle>
             <WarningMessage>
               {fullscreenExitReason === "escape"
                 ? "Anda tidak bisa keluar dari mode fullscreen dengan menekan ESC!"
-                : "Anda tidak bisa keluar dari mode fullscreen!"}
+                : "Permainan memerlukan fokus penuh! Score anda dikurangi!"}
             </WarningMessage>
             <WarningDescription>
-              Fullscreen diperlukan untuk bermain game ini. Selesaikan permainan
-              terlebih dahulu, kumpulkan semua sampah untuk menyelamatkan
-              lingkungan! Anda otomatis dikembalikan ke fullscreen.
+              Fullscreen diperlukan untuk bermain game ini sesuai desain.
+              Selesaikan permainan terlebih dahulu, kumpulkan semua sampah untuk
+              menyelamatkan lingkungan! Anda otomatis dikembalikan ke
+              fullscreen.
             </WarningDescription>
             <ButtonGroup>
+              <ResumeButton
+                onClick={() => {
+                  setShowFullscreenWarning(false);
+                  requestFullscreen();
+                }}
+              >
+                ↩️ Kembali Fullscreen
+              </ResumeButton>
               <ExitButton
                 onClick={() => {
                   setShowFullscreenWarning(false);
                   gamePlayingRef.current = false;
+                  // Decrement score saat keluar permainan
+                  if (onScoreDecrement) {
+                    onScoreDecrement(20);
+                  }
                   // Exit fullscreen sebelum kembali
                   exitFullscreen();
                   if (typeof onBack === "function") {

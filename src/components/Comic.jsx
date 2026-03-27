@@ -6,6 +6,41 @@ const Comic = ({ onBack }) => {
   const [selectedComic, setSelectedComic] = useState(null);
   const [showFullscreenRequest, setShowFullscreenRequest] = useState(false);
   const [pendingComic, setPendingComic] = useState(null);
+  const [score, setScore] = useState(0);
+
+  // Disable developer tools
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Disable F12
+      if (e.key === "F12") {
+        e.preventDefault();
+      }
+      // Disable Ctrl+Shift+I (DevTools)
+      if (e.ctrlKey && e.shiftKey && e.key === "I") {
+        e.preventDefault();
+      }
+      // Disable Ctrl+Shift+J (Console)
+      if (e.ctrlKey && e.shiftKey && e.key === "J") {
+        e.preventDefault();
+      }
+      // Disable Ctrl+Shift+C (Element Inspector)
+      if (e.ctrlKey && e.shiftKey && e.key === "C") {
+        e.preventDefault();
+      }
+    };
+
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("contextmenu", handleContextMenu);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, []);
 
   // Check if fullscreen is active
   const isFullscreenActive = () => {
@@ -81,6 +116,14 @@ const Comic = ({ onBack }) => {
     }
   };
 
+  const handleScoreIncrement = () => {
+    setScore((prev) => prev + 10);
+  };
+
+  const handleScoreDecrement = (amount = 10) => {
+    setScore((prev) => Math.max(0, prev - amount));
+  };
+
   const comics = [
     {
       id: "flood",
@@ -95,7 +138,12 @@ const Comic = ({ onBack }) => {
     return (
       <div className="relative w-full h-screen">
         {selectedComic === "flood" && (
-          <FloodGame onBack={() => setSelectedComic(null)} />
+          <FloodGame
+            onBack={() => setSelectedComic(null)}
+            onScoreIncrement={handleScoreIncrement}
+            onScoreDecrement={handleScoreDecrement}
+            score={score}
+          />
         )}
         <button
           onClick={() => {
@@ -119,6 +167,18 @@ const Comic = ({ onBack }) => {
         >
           ←
         </button>
+        <div
+          className="
+          fixed top-5 left-5 md:top-6 md:left-6 z-50
+          px-4 md:px-6 py-2 md:py-3
+          font-black text-lg md:text-xl
+          text-white bg-gradient-to-r from-purple-600 to-purple-700
+          border-3 border-black rounded-lg
+          shadow-[4px_4px_0px_#000]
+        "
+        >
+          Score: {score}
+        </div>
       </div>
     );
   }
