@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import FloodGame from "./FloodGame";
+import FireGame from "./FireGame";
 import Button from "./button";
 
 const Comic = ({ onBack }) => {
@@ -116,8 +117,8 @@ const Comic = ({ onBack }) => {
     }
   };
 
-  const handleScoreIncrement = () => {
-    setScore((prev) => prev + 10);
+  const handleScoreIncrement = (amount = 10) => {
+    setScore((prev) => prev + amount);
   };
 
   const handleScoreDecrement = (amount = 10) => {
@@ -132,14 +133,34 @@ const Comic = ({ onBack }) => {
         "Pelajari bagaimana penumpukan sampah dapat menyebabkan banjir. Kumpulkan semua sampah untuk menyelamatkan kota!",
       emoji: "🌊🗑️",
     },
+    {
+      id: "fire",
+      title: "Kesadaran Bahaya Kebakaran",
+      description:
+        "Kumpulkan minimal 3 benda berbahaya (puntung rokok, korek api, api unggun) dan hitung total bahayanya untuk menyelamatkan diri dari kebakaran!",
+      emoji: "🔥⚠️",
+    },
   ];
+
+  const handleGameBack = () => {
+    setSelectedComic(null);
+    exitFullscreen();
+  };
 
   if (selectedComic) {
     return (
       <div className="relative w-full h-screen">
         {selectedComic === "flood" && (
           <FloodGame
-            onBack={() => setSelectedComic(null)}
+            onBack={handleGameBack}
+            onScoreIncrement={handleScoreIncrement}
+            onScoreDecrement={handleScoreDecrement}
+            score={score}
+          />
+        )}
+        {selectedComic === "fire" && (
+          <FireGame
+            onBack={handleGameBack}
             onScoreIncrement={handleScoreIncrement}
             onScoreDecrement={handleScoreDecrement}
             score={score}
