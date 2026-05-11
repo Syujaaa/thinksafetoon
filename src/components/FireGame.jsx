@@ -11,7 +11,6 @@ const FireGame = ({
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState("intro");
   const [hazardImagesReady, setHazardImagesReady] = useState(false);
-  const hazardImagesReadyRef = useRef(false);
   const [collectedItems, setCollectedItems] = useState([]);
   const [totalHazard, setTotalHazard] = useState(0);
   const [showGameWon, setShowGameWon] = useState(false);
@@ -75,7 +74,6 @@ const FireGame = ({
     },
   ];
 
-  // Benda yang TIDAK menyebabkan bahaya kebakaran
   const safeItemsData = [
     {
       id: "water",
@@ -104,7 +102,6 @@ const FireGame = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Limit DPR untuk mobile stability - lebih rendah untuk device kecil
     const isMobileScreen = window.innerWidth < 768;
     const dpr = isMobileScreen
       ? Math.min(window.devicePixelRatio || 1, 1.5)
@@ -121,7 +118,6 @@ const FireGame = ({
 
     const ctx = canvas.getContext("2d");
     if (ctx) {
-      // Reset transform to avoid accumulating scale after resizes.
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
     }
@@ -130,11 +126,10 @@ const FireGame = ({
     gameStateRef.current.canvasHeight = height;
     gameStateRef.current.dpr = dpr;
 
-    // Adaptive ground level based on screen size
     const isMobile = width < 768;
     const skyRatio = isMobile ? 0.5 : 0.55;
     const groundLevel = height * skyRatio;
-    const playAreaHeight = height - groundLevel - 80; // Space for collection box
+    const playAreaHeight = height - groundLevel - 80; 
 
     gameStateRef.current.groundLevel = groundLevel;
     gameStateRef.current.skyEndY = groundLevel;
@@ -148,7 +143,6 @@ const FireGame = ({
       height: 80,
     };
 
-    // Item size - more responsive for small screens - diperkecil lebih lagi
     const itemSize = isMobile
       ? Math.max(32, Math.min(40, width * 0.1))
       : Math.max(35, Math.min(48, width * 0.05));
@@ -247,14 +241,12 @@ const FireGame = ({
     const items = [];
     let itemId = 0;
 
-    // Grid-based spawn untuk positioning rapi dan tidak timpa
-    // Compact spacing untuk mobile agar fit lebih banyak item
     const baseGridSpacing = itemSize + overlapPad * 0.6;
     const gridSpacing = isMobile
       ? Math.ceil(baseGridSpacing * 0.85)
       : baseGridSpacing;
     const colsPerRow = Math.max(2, Math.floor((width - 60) / gridSpacing));
-    const gridStartX = isMobile ? width * 0.03 : width * 0.05; // Margin lebih kecil untuk mobile
+    const gridStartX = isMobile ? width * 0.03 : width * 0.05;
 
     let gridRow = 0;
     let gridCol = 0;
@@ -271,9 +263,8 @@ const FireGame = ({
         return spawnItemAtGridPosition(hazardType);
       }
 
-      // Cek apakah Y masih dalam area yang terlihat
       if (gridY > maxVisibleY) {
-        return null; // Tidak bisa spawn lagi, terlalu bawah
+        return null;
       }
 
       const newItem = {
@@ -298,7 +289,6 @@ const FireGame = ({
       return newItem;
     };
 
-    // Legacy spawnItem untuk fallback (untuk Api Unggun jika tidak cukup grid space)
     const spawnItem = (hazardType) => {
       let x = 0;
       let y = baseY;
@@ -315,7 +305,6 @@ const FireGame = ({
         y = baseY + buryDepth;
         y = Math.max(minY, Math.min(y, maxVisibleY));
 
-        // Optimized collision detection dengan early exit
         validPosition = true;
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
@@ -356,12 +345,9 @@ const FireGame = ({
       return newItem;
     };
 
-    // Position items grounded dengan grid system - rapi tidak timpa
-    // Spawn items dengan round-robin agar distribusi lebih merata
     gridRow = 0;
     gridCol = 0;
 
-    // Hitung desired count untuk setiap hazard type
     const spawnCounts = hazardItemsData.map((hazardType) => {
       const densityFactor = isMobile ? 2.2 : 3;
       return Math.min(
@@ -370,10 +356,8 @@ const FireGame = ({
       );
     });
 
-    // Track spawn progress untuk setiap type
     const spawnProgress = [0, 0, 0];
 
-    // Round-robin spawn - spawn dari setiap type secara bergantian
     let allDone = false;
     while (!allDone) {
       allDone = true;
@@ -389,15 +373,12 @@ const FireGame = ({
       }
     }
 
-    // Ensure at least 1 campfire (api unggun) visible dengan fallback placement
     const fireType = hazardItemsData.find((h) => h.id === "fire");
     if (fireType) {
       let fireCount = items.filter((it) => it.type === "fire").length;
       let attempts = 0;
 
-      // Jika blum ada fire, spawn minimal 1 dengan guaranteed placement
       if (fireCount < 1) {
-        // Try 50 attempts dengan collision detection
         attempts = 0;
         while (fireCount < 1 && attempts < 50) {
           const added = spawnItem(fireType);
@@ -405,7 +386,6 @@ const FireGame = ({
           attempts++;
         }
 
-        // Fallback: spawn guaranteed placement di kiri atas
         if (fireCount < 1) {
           const fallbackX = width * 0.15; // Kiri area
           const fallbackY = groundLevel + itemSize * 0.5; // Tengah tanah
@@ -464,7 +444,6 @@ const FireGame = ({
       }
     }
 
-    // Spawn safe items dengan round-robin juga
     const safespawnCounts = safeItemsData.map((safeType) => {
       const densityFactor = isMobile ? 1.6 : 1.8;
       return Math.min(
@@ -489,11 +468,9 @@ const FireGame = ({
         let x = baseHazard.x + Math.cos(ang) * dist;
         let y = baseHazard.y + Math.sin(ang) * dist;
 
-        // Keep within bounds (and away from collection box lanes already handled by xRanges).
         x = Math.max(0, Math.min(x, width - itemSize));
         y = Math.max(minY, Math.min(y, maxVisibleY));
 
-        // Collision check vs all existing items (hazard + safe) with same pad logic.
         let ok = true;
         for (let i = 0; i < items.length; i++) {
           const it = items[i];
@@ -539,8 +516,6 @@ const FireGame = ({
       for (let typeIdx = 0; typeIdx < safeItemsData.length; typeIdx++) {
         if (safeSpawnProgress[typeIdx] < safespawnCounts[typeIdx]) {
           const safeType = safeItemsData[typeIdx];
-          // Prefer spawn safe items dekat benda berbahaya agar user bisa membandingkan.
-          // Fallback ke random jika tidak dapat posisi valid.
           const baseHazard =
             hazardOnlyItems.length > 0
               ? hazardOnlyItems[
@@ -554,8 +529,6 @@ const FireGame = ({
             safeAllDone = false;
             continue;
           }
-
-          // Fallback: spawn random di tanah dengan collision detection.
           let x = sampleX();
           let y = baseY;
           let attempts = 0;
@@ -650,7 +623,6 @@ const FireGame = ({
     const height = gameStateRef.current.canvasHeight;
     const groundLevel = gameStateRef.current.groundLevel;
 
-    // Grass
     const grassGradient = ctx.createLinearGradient(0, groundLevel, 0, height);
     grassGradient.addColorStop(0, "#228B22");
     grassGradient.addColorStop(1, "#1a6b1a");
@@ -658,7 +630,6 @@ const FireGame = ({
     ctx.fillStyle = grassGradient;
     ctx.fillRect(0, groundLevel, width, height - groundLevel);
 
-    // Ground line
     ctx.strokeStyle = "#2d5a2d";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -668,7 +639,6 @@ const FireGame = ({
   };
 
   const drawTree = (ctx, tree) => {
-    // Trunk
     ctx.fillStyle = "#8B4513";
     const trunkTopX = tree.x - tree.trunkWidth / 2;
     ctx.fillRect(
@@ -678,7 +648,6 @@ const FireGame = ({
       tree.height * 0.3,
     );
 
-    // Foliage (circle)
     ctx.fillStyle = "#228B22";
     ctx.beginPath();
     ctx.arc(
@@ -690,7 +659,6 @@ const FireGame = ({
     );
     ctx.fill();
 
-    // Foliage highlight
     ctx.fillStyle = "rgba(144, 238, 144, 0.4)";
     ctx.beginPath();
     ctx.arc(
@@ -710,18 +678,15 @@ const FireGame = ({
   const drawCollectionBox = (ctx) => {
     const box = gameStateRef.current.collectionBox;
 
-    // Background
     ctx.fillStyle = "rgba(255, 200, 0, 0.15)";
     ctx.fillRect(box.x, box.y, box.width, box.height);
 
-    // Border - dashed
     ctx.strokeStyle = "#FF6347";
     ctx.lineWidth = 3;
     ctx.setLineDash([10, 5]);
     ctx.strokeRect(box.x, box.y, box.width, box.height);
     ctx.setLineDash([]);
 
-    // Label
     ctx.fillStyle = "#000";
     ctx.font = "bold 16px Arial";
     ctx.textAlign = "center";
@@ -735,8 +700,6 @@ const FireGame = ({
 
     gameStateRef.current.hazardItems.forEach((item) => {
       if (item.collected) return;
-
-      // Cull items outside viewport untuk optimize rendering
       if (
         item.x + item.width < -viewportPadding ||
         item.x > canvasWidth + viewportPadding ||
@@ -752,10 +715,8 @@ const FireGame = ({
       ctx.rotate((item.rotation * Math.PI) / 180);
       ctx.scale(item.scale, item.scale);
 
-      // Cek apakah image sudah siap
       const img = gameStateRef.current.imageCache[item.type];
       if (img && img.complete) {
-        // Gambar image
         ctx.drawImage(
           img,
           -item.width / 2,
@@ -764,7 +725,6 @@ const FireGame = ({
           item.height,
         );
       } else {
-        // Fallback: Item box dengan warna + emoji
         ctx.fillStyle = item.color;
         ctx.fillRect(
           -item.width / 2,
@@ -773,7 +733,6 @@ const FireGame = ({
           item.height,
         );
 
-        // Safe items boleh pakai emoji, hazard items tidak.
         if (item.isSafe) {
           ctx.font = "32px Arial";
           ctx.textAlign = "center";
@@ -788,9 +747,6 @@ const FireGame = ({
         }
       }
 
-      // Border dihilangkan
-
-      // Points badge - smaller for mobile (hanya untuk hazard items, bukan safe items)
       if (!item.isSafe) {
         const badgeRadius = gameStateRef.current.isMobile ? 10 : 12;
         const badgeX = item.width / 2 - 10;
@@ -817,12 +773,10 @@ const FireGame = ({
     ctx.save();
     ctx.globalAlpha = 0.7;
 
-    // Highlight
     ctx.strokeStyle = "#FF0000";
     ctx.lineWidth = 4;
     ctx.strokeRect(item.x - 2, item.y - 2, item.width + 4, item.height + 4);
 
-    // Connection line to collection box
     const box = gameStateRef.current.collectionBox;
     ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
     ctx.lineWidth = 2;
@@ -843,13 +797,11 @@ const FireGame = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw in CSS pixel coordinates (consistent for hit-testing on mobile).
     const width = gameStateRef.current.canvasWidth;
     const height = gameStateRef.current.canvasHeight;
     const dpr = gameStateRef.current.dpr || 1;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Clear
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = "#FFF";
     ctx.fillRect(0, 0, width, height);
@@ -866,7 +818,6 @@ const FireGame = ({
     if (item.collected) return false;
 
     const box = gameStateRef.current.collectionBox;
-    // Seragamkan margin untuk semua device - lebih mudah capture
     const margin = 55;
 
     const collision =
@@ -879,7 +830,6 @@ const FireGame = ({
 
     item.collected = true;
 
-    // Animate disappear
     gsap.to(item, {
       opacity: 0,
       scale: 0.5,
@@ -888,14 +838,12 @@ const FireGame = ({
       onUpdate: () => redrawCanvas(),
     });
 
-    // Jika safe item, tampilkan alert dan jangan tambahkan ke score
     if (item.isSafe) {
       setSafeItemAlert(`"${item.name}" TIDAK menyebabkan kebakaran! 🚫`);
       setTimeout(() => setSafeItemAlert(""), 3000);
       return true;
     }
 
-    // Update state hanya untuk hazard items
     const newCollected = gameStateRef.current.hazardItems.filter(
       (i) => i.collected && !i.isSafe,
     );
@@ -904,12 +852,10 @@ const FireGame = ({
     const total = newCollected.reduce((sum, i) => sum + i.points, 0);
     setTotalHazard(total);
 
-    // Minimal 4 untuk boleh selesai, tapi user boleh lanjut kumpulkan.
     if (newCollected.length >= 4) {
       setCanFinish(true);
     }
 
-    // Kalau semua benda berbahaya sudah dikumpulkan, langsung masuk ke hitung total.
     const totalHazardItems = gameStateRef.current.hazardItems.filter(
       (i) => !i.isSafe,
     ).length;
@@ -1101,10 +1047,6 @@ const FireGame = ({
   };
 
   useEffect(() => {
-    hazardImagesReadyRef.current = hazardImagesReady;
-  }, [hazardImagesReady]);
-
-  useEffect(() => {
     calculateDimensions();
     setHazardImagesReady(false);
 
@@ -1131,7 +1073,7 @@ const FireGame = ({
 
     const handleResize = () => {
       calculateDimensions();
-      if (hazardImagesReadyRef.current) {
+      if (hazardImagesReady) {
         initializeItems();
         requestDraw();
       }
@@ -1303,12 +1245,8 @@ const FireGame = ({
                 </ul>
               </Tips>
             </IntroDescription>
-            <StartButton
-              onClick={() => setGameState("playing")}
-              disabled={!hazardImagesReady}
-              aria-disabled={!hazardImagesReady}
-            >
-              {hazardImagesReady ? "🎮 MULAI BERMAIN" : "⏳ MEMUAT GAMBAR..."}
+            <StartButton onClick={() => setGameState("playing")}>
+              🎮 MULAI BERMAIN
             </StartButton>
           </IntroModal>
         </IntroOverlay>
@@ -1679,14 +1617,6 @@ const StartButton = styled.button`
   &:active {
     transform: translate(0, 0);
     box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
-  }
-
-  &:disabled,
-  &[aria-disabled="true"] {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.22);
   }
 `;
 

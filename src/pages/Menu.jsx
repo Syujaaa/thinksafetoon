@@ -2,8 +2,9 @@ import Button from "../components/button";
 import Kredit from "../components/kredit";
 import Comic from "../components/Comic";
 import { useState } from "react";
+import storyLibrary from "../data/storyLibrary";
 
-export default function Menu() {
+export default function Menu({ onSelectStory }) {
   const [showKredit, setShowKredit] = useState(false);
   const [showComic, setShowComic] = useState(false);
 
@@ -13,6 +14,12 @@ export default function Menu() {
 
   const handleComicClick = () => {
     setShowComic(true);
+  };
+
+  const handleStartStory = () => {
+    const selected = storyLibrary[0];
+    if (!selected) return;
+    onSelectStory?.(selected);
   };
 
   if (showComic) {
@@ -164,7 +171,9 @@ export default function Menu() {
               </div>
               <div className="w-2 h-2 bg-black rounded-full"></div>
             </div>
-            <Button>Bukpan</Button>
+            <Button onClick={handleStartStory}>
+              {storyLibrary[0]?.title ?? "Mulai Cerita"}
+            </Button>
           </div>
 
           <div className="space-y-1">

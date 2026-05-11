@@ -1,18 +1,22 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
-import Button from "./components/button.jsx";
-import Menu from "./pages/Menu.jsx";
+import VNEngine from "./components/VNEngine";
+import Menu from "./pages/Menu";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [selectedStory, setSelectedStory] = useState(null);
 
-  return (
-    <>
-      <Menu />
-    </>
-  );
+  if (selectedStory?.data) {
+    return (
+      <VNEngine
+        storyData={selectedStory.data}
+        onExit={() => {
+          setSelectedStory(null);
+        }}
+      />
+    );
+  }
+
+  return <Menu onSelectStory={setSelectedStory} />;
 }
 
 export default App;
