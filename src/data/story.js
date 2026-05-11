@@ -261,7 +261,7 @@ const story = [
       },
     ],
     speaker: "Furina",
-    text: "Kita belajar Teorema Pythagoras, jarak, dan pemecahan masalah banjir. Kenapa jawabannya sekitar 25,3 meter? Karena c = akar(24² + 8²) = akar(640). Nilai akar 640 setara 8 akar 10, dan akar 10 kira-kira 3,16, jadi 8 x 3,16 ≈ 25,3.",
+    text: "Kita belajar Teorema Pythagoras, jarak, dan pemecahan masalah banjir. Kenapa jawabannya sekitar 25,3 meter? Karena c = √(24² + 8²) = √(640). Nilai √(640) setara 8√(10), dan √(10) kira-kira 3,16, jadi 8 x 3,16 ≈ 25,3.",
     choices: null,
     next: null,
   },
