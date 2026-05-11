@@ -9,6 +9,11 @@ const QuizBox = ({ quiz, onSubmit }) => {
     () => (Array.isArray(quiz?.options) ? quiz.options : []),
     [quiz?.options],
   );
+  const isMultipleChoice = quiz?.type === "multiple_choice";
+  const isNumber = quiz?.type === "number";
+  const isNumberAnswerEmpty = numberAnswer.trim() === "";
+  const isSubmitDisabled =
+    (isMultipleChoice && !selectedOptionId) || (isNumber && isNumberAnswerEmpty);
 
   if (!quiz) return null;
 
@@ -20,6 +25,7 @@ const QuizBox = ({ quiz, onSubmit }) => {
     }
 
     if (quiz.type === "number") {
+      if (isNumberAnswerEmpty) return;
       const parsed = Number(numberAnswer);
       if (Number.isNaN(parsed)) return;
       onSubmit({ type: "number", value: parsed });
@@ -62,6 +68,7 @@ const QuizBox = ({ quiz, onSubmit }) => {
             value={numberAnswer}
             onChange={(event) => setNumberAnswer(event.target.value)}
             placeholder={quiz.placeholder ?? "Masukkan jawaban angka"}
+            required
             className="w-full rounded-lg border border-white/20 bg-slate-800/80 px-3 py-3 text-sm text-white outline-none ring-cyan-300/40 placeholder:text-slate-400 focus:ring-2"
           />
           <span className="text-xs text-slate-300 sm:text-sm">{quiz.unit ?? ""}</span>
@@ -71,7 +78,8 @@ const QuizBox = ({ quiz, onSubmit }) => {
       <button
         type="button"
         onClick={handleSubmit}
-        className="mt-3 w-full rounded-lg border border-cyan-300/40 bg-cyan-500/20 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/30 sm:w-auto"
+        disabled={isSubmitDisabled}
+        className="mt-3 w-full rounded-lg border border-cyan-300/40 bg-cyan-500/20 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
       >
         Cek Jawaban
       </button>

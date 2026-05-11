@@ -82,13 +82,16 @@ const VNEngine = ({ storyData = defaultStory, onExit }) => {
   }, [currentScene?.next, goNext, hasChoices, hasQuiz, isComplete, settings.skipMode]);
 
   const reversedHistory = useMemo(() => [...history].reverse(), [history]);
-
   const handleContinue = () => {
     if (!isComplete) {
       revealNow();
       return;
     }
     if (hasChoices || hasQuiz) return;
+    if (!currentScene?.next) {
+      onExit?.();
+      return;
+    }
     goNext();
   };
 

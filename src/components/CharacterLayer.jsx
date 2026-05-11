@@ -39,10 +39,10 @@ const CharacterLayer = ({ characters = [] }) => {
           const desktopPosClass = positionClass[char.position] ?? positionClass.center;
           const mobileSizeClass =
             totalCharacters >= 3
-              ? "h-[34vh] w-[28vw] max-w-[132px]"
+              ? "h-[36vh] w-[30vw] max-w-[140px]"
               : totalCharacters === 2
-                ? "h-[38vh] w-[33vw] max-w-[165px]"
-                : "h-[42vh] w-[40vw] max-w-[205px]";
+                ? "h-[40vh] w-[35vw] max-w-[175px]"
+                : "h-[44vh] w-[42vw] max-w-[215px]";
           const initial = initialByAnimation[char.animation] ?? initialByAnimation.fade;
 
           return (

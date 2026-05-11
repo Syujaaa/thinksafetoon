@@ -19,12 +19,12 @@ const Controls = ({
       <button type="button" className={baseClass} onClick={onToggleSkip}>
         Skip: {settings.skipMode ? "On" : "Off"}
       </button>
-      <button type="button" className={baseClass} onClick={onSave}>
+      {/* <button type="button" className={baseClass} onClick={onSave}>
         Save
       </button>
       <button type="button" className={baseClass} onClick={onLoad}>
         Load
-      </button>
+      </button> */}
       <button type="button" className={baseClass} onClick={onOpenHistory}>
         History
       </button>

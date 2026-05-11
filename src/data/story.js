@@ -118,11 +118,11 @@ const story = [
       },
     ],
     speaker: "Eula",
-    text: "Rumus Pythagoras: c^2 = a^2 + b^2. Sekarang kerjakan dulu hitungannya sendiri, lalu jawab soal berikut.",
+    text: "Rumus Pythagoras: c² = a² + b². Sekarang kerjakan dulu hitungannya sendiri, lalu jawab soal berikut.",
     choices: null,
     quiz: {
       type: "multiple_choice",
-      prompt: "Soal 1: Berapa nilai c^2 dari 24^2 + 8^2?",
+      prompt: "Soal 1: Berapa nilai c² dari 24² + 8²?",
       options: [
         { id: "a", text: "620" },
         { id: "b", text: "640" },
@@ -261,7 +261,7 @@ const story = [
       },
     ],
     speaker: "Furina",
-    text: "Kita belajar Teorema Pythagoras, jarak, dan pemecahan masalah banjir. Matematika ternyata sangat berguna untuk kondisi nyata.",
+    text: "Kita belajar Teorema Pythagoras, jarak, dan pemecahan masalah banjir. Kenapa jawabannya sekitar 25,3 meter? Karena c = akar(24² + 8²) = akar(640). Nilai akar 640 setara 8 akar 10, dan akar 10 kira-kira 3,16, jadi 8 x 3,16 ≈ 25,3.",
     choices: null,
     next: null,
   },
