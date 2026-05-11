@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Background from "./Background";
 import CharacterLayer from "./CharacterLayer";
@@ -9,8 +9,17 @@ import QuizBox from "./QuizBox";
 import defaultStory from "../data/story";
 import { useTypewriter } from "../hooks/useTypewriter";
 import { useVNEngine } from "../hooks/useVNEngine";
+import {
+  resolveStoryTransition,
+  findSceneInLibrary,
+} from "../data/storyLibrary";
 
-const VNEngine = ({ storyData = defaultStory, onExit }) => {
+const VNEngine = ({
+  storyData = defaultStory,
+  onExit,
+  onChangeStory,
+  startSceneId,
+}) => {
   const {
     currentScene,
     currentSceneId,
@@ -29,6 +38,20 @@ const VNEngine = ({ storyData = defaultStory, onExit }) => {
     persist,
   } = useVNEngine(storyData);
   const [showHistory, setShowHistory] = useState(false);
+  const lastProcessedStartSceneRef = useRef(null);
+
+  // Ketika startSceneId berubah (misalnya saat transisi ke arc baru), navigate ke scene tersebut
+  useEffect(() => {
+    if (startSceneId && lastProcessedStartSceneRef.current !== startSceneId) {
+      console.log("[VNEngine] Navigating to startSceneId:", startSceneId);
+      lastProcessedStartSceneRef.current = startSceneId;
+      // Gunakan setTimeout kecil untuk memastikan storyMap sudah update
+      const timer = setTimeout(() => {
+        goToScene(startSceneId);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [startSceneId, goToScene]);
 
   const textSpeed = settings.skipMode ? 0 : 22;
   const { displayedText, isComplete, revealNow } = useTypewriter(
@@ -104,6 +127,49 @@ const VNEngine = ({ storyData = defaultStory, onExit }) => {
   ]);
 
   const reversedHistory = useMemo(() => [...history].reverse(), [history]);
+
+  const handleSelectChoice = (choice) => {
+    if (!choice?.next) return;
+
+    // Cek apakah ini adalah transisi ke story arc lain
+    if (choice.next.startsWith("@@NEXT_STORY:")) {
+      const transition = resolveStoryTransition(choice.next);
+      console.log("[VNEngine] Arc Transition detected:", transition);
+
+      if (transition && onChangeStory) {
+        const { scene, arcId } = findSceneInLibrary(transition.sceneId);
+        console.log("[VNEngine] findSceneInLibrary result:", {
+          scene: scene?.id,
+          arcId,
+        });
+
+        if (scene && arcId) {
+          console.log(
+            "[VNEngine] Calling onChangeStory with arcId:",
+            arcId,
+            "sceneId:",
+            transition.sceneId,
+          );
+          onChangeStory(arcId, transition.sceneId);
+          return;
+        } else {
+          console.warn(
+            "[VNEngine] Scene not found in library:",
+            transition.sceneId,
+          );
+        }
+      } else {
+        console.warn(
+          "[VNEngine] Transition parse failed or onChangeStory not available",
+        );
+      }
+    }
+
+    // Normal scene transition (within same story)
+    console.log("[VNEngine] Normal scene transition to:", choice.next);
+    selectChoice(choice);
+  };
+
   const handleContinue = () => {
     if (!isComplete) {
       revealNow();
@@ -162,6 +228,18 @@ const VNEngine = ({ storyData = defaultStory, onExit }) => {
         </div>
       )}
 
+      {currentScene?.background?.includes("fire_map.png") && (
+        <div className="absolute top-0 left-0 right-0 z-20 flex justify-center px-3 pt-3 md:hidden sm:px-4 sm:pt-4">
+          <div className="w-full max-w-sm rounded-lg border border-white/20 bg-slate-900/75 p-2">
+            <img
+              src={currentScene.background}
+              alt="Peta Kebakaran"
+              className="h-auto w-full rounded object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-end px-3 pb-4 pt-3 sm:px-4 sm:pb-5 md:px-8 md:pb-8">
         <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
           <div className="rounded-lg border border-white/20 bg-slate-900/75 px-3 py-2.5 text-xs text-cyan-100 md:text-sm">
@@ -203,7 +281,7 @@ const VNEngine = ({ storyData = defaultStory, onExit }) => {
 
         <ChoiceBox
           choices={isComplete ? currentScene.choices : []}
-          onSelect={selectChoice}
+          onSelect={handleSelectChoice}
         />
         {isComplete && hasQuiz && (
           <QuizBox quiz={currentScene.quiz} onSubmit={handleQuizSubmit} />

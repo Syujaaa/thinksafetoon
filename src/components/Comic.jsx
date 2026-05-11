@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FloodGame from "./FloodGame";
 import FireGame from "./FireGame";
 import Button from "./button";
@@ -7,7 +7,16 @@ const Comic = ({ onBack }) => {
   const [selectedComic, setSelectedComic] = useState(null);
   const [showFullscreenRequest, setShowFullscreenRequest] = useState(false);
   const [pendingComic, setPendingComic] = useState(null);
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState(() => {
+    // Load score from localStorage jika ada, jika tidak mulai dari 0
+    const savedScore = localStorage.getItem("comicGameScore");
+    return savedScore ? parseInt(savedScore, 10) : 0;
+  });
+
+  // Simpan score ke localStorage setiap kali berubah
+  useEffect(() => {
+    localStorage.setItem("comicGameScore", score.toString());
+  }, [score]);
 
   // Disable developer tools
   React.useEffect(() => {
@@ -381,7 +390,24 @@ const Comic = ({ onBack }) => {
       </div>
 
       {/* Back Button Section */}
-      <div className="relative z-10 flex justify-center gap-4 mt-auto pt-6 sm:pt-8">
+      <div className="relative z-10 flex flex-col items-center gap-4 mt-auto pt-6 sm:pt-8">
+        {/* Score Display */}
+        {score > 0 && (
+          <div className="flex items-center gap-4 bg-white border-3 border-black rounded-lg px-6 py-3">
+            <span className="text-lg font-black text-black">
+              Score Saat Ini: {score}
+            </span>
+            <button
+              onClick={() => {
+                localStorage.removeItem("comicGameScore");
+                setScore(0);
+              }}
+              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white font-bold rounded border-2 border-black cursor-pointer text-sm transition-all"
+            >
+              Reset
+            </button>
+          </div>
+        )}
         <Button onClick={onBack}>← Kembali ke Menu</Button>
       </div>
 

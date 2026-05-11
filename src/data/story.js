@@ -118,11 +118,11 @@ const story = [
       },
     ],
     speaker: "Eula",
-    text: "Rumus Pythagoras: c² = a² + b². Sekarang kerjakan dulu hitungannya sendiri, lalu jawab soal berikut.",
+    text: "Rumus Pythagoras: c² = a² + b². Jika diketahui A ke B = 24 meter dan B ke C = 8 meter, Sekarang kerjakan dulu hitungannya sendiri, lalu jawab soal berikut.",
     choices: null,
     quiz: {
       type: "multiple_choice",
-      prompt: "Soal 1: Berapa nilai c² dari 24² + 8²?",
+      prompt: "Soal 1: Berapa nilai c²?",
       options: [
         { id: "a", text: "620" },
         { id: "b", text: "640" },
@@ -262,7 +262,12 @@ const story = [
     ],
     speaker: "Furina",
     text: "Kita belajar Teorema Pythagoras, jarak, dan pemecahan masalah banjir. Kenapa jawabannya sekitar 25,3 meter? Karena c = √(24² + 8²) = √(640). Nilai √(640) setara 8√(10), dan √(10) kira-kira 3,16, jadi 8 x 3,16 ≈ 25,3.",
-    choices: null,
+    choices: [
+      {
+        text: "LANJUTKAN PETUALANGAN",
+        next: "@@NEXT_STORY:fire_1_transition",
+      },
+    ],
     next: null,
   },
 ];

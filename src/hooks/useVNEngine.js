@@ -35,7 +35,8 @@ export const useVNEngine = (story) => {
   useEffect(() => {
     setCurrentSceneId(story[0]?.id ?? null);
     setHistory([]);
-    setScore(0);
+    // Jangan reset score saat transisi arc - pertahankan score dari arc sebelumnya
+    // setScore(0);
     setQuizResultsBySceneId({});
   }, [story]);
 
@@ -52,7 +53,10 @@ export const useVNEngine = (story) => {
     if (typeof saved.score === "number") {
       setScore(saved.score);
     }
-    if (saved.quizResultsBySceneId && typeof saved.quizResultsBySceneId === "object") {
+    if (
+      saved.quizResultsBySceneId &&
+      typeof saved.quizResultsBySceneId === "object"
+    ) {
       setQuizResultsBySceneId(saved.quizResultsBySceneId);
     }
     if (saved.settings) {
@@ -70,7 +74,10 @@ export const useVNEngine = (story) => {
   useEffect(() => {
     if (!currentScene) return;
     audioRef.current.playBgm(currentScene.music, settings.masterVolume);
-    audioRef.current.playAmbience(currentScene.ambience, settings.ambienceVolume);
+    audioRef.current.playAmbience(
+      currentScene.ambience,
+      settings.ambienceVolume,
+    );
     audioRef.current.playSfx(UI_SFX.transition, settings.sfxVolume);
   }, [
     currentScene,
@@ -110,7 +117,24 @@ export const useVNEngine = (story) => {
 
   const goToScene = useCallback(
     (sceneId) => {
-      if (!sceneId || !storyMap.has(sceneId)) return;
+      console.log(
+        "[useVNEngine] goToScene called with:",
+        sceneId,
+        "storyMap size:",
+        storyMap.size,
+      );
+      if (!sceneId) {
+        console.warn("[useVNEngine] sceneId is empty");
+        return;
+      }
+      if (!storyMap.has(sceneId)) {
+        console.warn("[useVNEngine] Scene not found in storyMap:", sceneId);
+        console.warn(
+          "[useVNEngine] Available scenes:",
+          Array.from(storyMap.keys()).slice(0, 5),
+        );
+        return;
+      }
       audioRef.current.playSfx(UI_SFX.click, settings.sfxVolume);
       setCurrentSceneId(sceneId);
     },
@@ -149,7 +173,10 @@ export const useVNEngine = (story) => {
     if (typeof saved.score === "number") {
       setScore(saved.score);
     }
-    if (saved.quizResultsBySceneId && typeof saved.quizResultsBySceneId === "object") {
+    if (
+      saved.quizResultsBySceneId &&
+      typeof saved.quizResultsBySceneId === "object"
+    ) {
       setQuizResultsBySceneId(saved.quizResultsBySceneId);
     }
     if (saved.settings) {
