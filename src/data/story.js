@@ -185,7 +185,7 @@ const story = [
       type: "number",
       prompt:
         "Soal 2 (Input Angka): Masukkan panjang diagonal A-C dalam bentuk desimal (pembulatan 1 angka di belakang koma).",
-      placeholder: "Contoh: 25.3",
+      placeholder: "Contoh: xy.z",
       unit: "meter",
       correctValue: 25.3,
       tolerance: 0.2,
