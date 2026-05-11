@@ -185,13 +185,10 @@ const VNEngine = ({
     isStoryPlayingRef.current = true;
     requestFullscreen();
 
-    // Handle fullscreen exit - force re-enter
+    // Handle fullscreen exit - show warning
     const handleFullscreenChange = () => {
       if (isStoryPlayingRef.current && !isFullscreenActive()) {
         setShowFullscreenWarning(true);
-        setTimeout(() => {
-          requestFullscreen();
-        }, 500);
       }
     };
 
@@ -276,6 +273,9 @@ const VNEngine = ({
     }
     if (hasChoices || hasQuiz) return;
     if (!currentScene?.next) {
+      // Story selesai - exit fullscreen dan trigger onExit
+      isStoryPlayingRef.current = false;
+      exitFullscreen();
       onExit?.();
       return;
     }
@@ -440,6 +440,56 @@ const VNEngine = ({
           </motion.aside>
         )}
       </AnimatePresence>
+
+      {/* Fullscreen Warning Modal */}
+      {showFullscreenWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <motion.div
+            className="w-full max-w-md rounded-2xl border-4 border-black bg-white p-8 shadow-2xl"
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <h2 className="mb-4 text-3xl font-black uppercase text-red-600">
+                ⚠️ Fokus Diperlukan!
+              </h2>
+              <p className="mb-2 text-lg font-bold text-black">
+                Fullscreen telah dinonaktifkan!
+              </p>
+              <p className="mb-6 text-sm text-gray-600 leading-relaxed">
+                Mode fullscreen diperlukan untuk pengalaman cerita visual novel yang optimal. Silakan kembali ke fullscreen untuk melanjutkan.
+              </p>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowFullscreenWarning(false);
+                    requestFullscreen();
+                  }}
+                  className="rounded-lg border-2 border-black bg-green-500 px-6 py-3 font-bold text-white shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all hover:shadow-[6px_6px_0px_rgba(0,0,0,0.2)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-[2px_2px_0px_rgba(0,0,0,0.2)] active:translate-x-0 active:translate-y-0"
+                >
+                  ↩️ Kembali Fullscreen
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowFullscreenWarning(false);
+                    isStoryPlayingRef.current = false;
+                    exitFullscreen();
+                    onExit?.();
+                  }}
+                  className="rounded-lg border-2 border-black bg-red-500 px-6 py-3 font-bold text-white shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all hover:shadow-[6px_6px_0px_rgba(0,0,0,0.2)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-[2px_2px_0px_rgba(0,0,0,0.2)] active:translate-x-0 active:translate-y-0"
+                >
+                  ✕ Keluar Cerita
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </main>
   );
 };
