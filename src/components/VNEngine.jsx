@@ -150,6 +150,18 @@ const VNEngine = ({ storyData = defaultStory, onExit }) => {
       <Background background={currentScene.background} />
       <CharacterLayer characters={currentScene.characters} />
 
+      {currentScene?.background?.includes("flood_map.png") && (
+        <div className="absolute top-0 left-0 right-0 z-20 flex justify-center px-3 pt-3 md:hidden sm:px-4 sm:pt-4">
+          <div className="w-full max-w-sm rounded-lg border border-white/20 bg-slate-900/75 p-2">
+            <img
+              src={currentScene.background}
+              alt="Peta Banjir"
+              className="h-auto w-full rounded object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-end px-3 pb-4 pt-3 sm:px-4 sm:pb-5 md:px-8 md:pb-8">
         <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
           <div className="rounded-lg border border-white/20 bg-slate-900/75 px-3 py-2.5 text-xs text-cyan-100 md:text-sm">
