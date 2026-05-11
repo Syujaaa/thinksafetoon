@@ -459,7 +459,8 @@ const VNEngine = ({
                 Fullscreen telah dinonaktifkan!
               </p>
               <p className="mb-6 text-sm text-gray-600 leading-relaxed">
-                Mode fullscreen diperlukan untuk pengalaman cerita visual novel yang optimal. Silakan kembali ke fullscreen untuk melanjutkan.
+                Mode fullscreen diperlukan untuk pengalaman cerita visual novel
+                yang optimal. Silakan kembali ke fullscreen untuk melanjutkan.
               </p>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
