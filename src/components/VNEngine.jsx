@@ -38,7 +38,59 @@ const VNEngine = ({
     persist,
   } = useVNEngine(storyData);
   const [showHistory, setShowHistory] = useState(false);
+  const [showFullscreenWarning, setShowFullscreenWarning] = useState(false);
   const lastProcessedStartSceneRef = useRef(null);
+  const isStoryPlayingRef = useRef(false);
+
+  // Fungsi untuk check apakah sedang fullscreen
+  const isFullscreenActive = () => {
+    return (
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+  };
+
+  // Fungsi untuk request fullscreen
+  const requestFullscreen = async () => {
+    const element = document.documentElement;
+    try {
+      // Skip jika sudah fullscreen
+      if (isFullscreenActive()) {
+        return;
+      }
+
+      if (element.requestFullscreen) {
+        await element.requestFullscreen();
+      } else if (element.webkitRequestFullscreen) {
+        await element.webkitRequestFullscreen();
+      } else if (element.mozRequestFullScreen) {
+        await element.mozRequestFullScreen();
+      } else if (element.msRequestFullscreen) {
+        await element.msRequestFullscreen();
+      }
+    } catch (error) {
+      if (error.name === "NotAllowedError") {
+        console.log("Fullscreen request blocked by user or browser");
+      } else if (error.name === "TypeError") {
+        console.log("Fullscreen request failed:", error.message);
+      }
+    }
+  };
+
+  // Fungsi untuk exit fullscreen
+  const exitFullscreen = () => {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  };
 
   // Ketika startSceneId berubah (misalnya saat transisi ke arc baru), navigate ke scene tersebut
   useEffect(() => {
@@ -127,6 +179,53 @@ const VNEngine = ({
   ]);
 
   const reversedHistory = useMemo(() => [...history].reverse(), [history]);
+
+  // Request fullscreen saat VNEngine mount
+  useEffect(() => {
+    isStoryPlayingRef.current = true;
+    requestFullscreen();
+
+    // Handle fullscreen exit - force re-enter
+    const handleFullscreenChange = () => {
+      if (isStoryPlayingRef.current && !isFullscreenActive()) {
+        setShowFullscreenWarning(true);
+        setTimeout(() => {
+          requestFullscreen();
+        }, 500);
+      }
+    };
+
+    // Handle tab visibility change
+    const handleVisibilityChange = () => {
+      if (document.hidden && isStoryPlayingRef.current) {
+        // Tab berubah ke hidden
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("msfullscreenchange", handleFullscreenChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      isStoryPlayingRef.current = false;
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener(
+        "msfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   const handleSelectChoice = (choice) => {
     if (!choice?.next) return;
