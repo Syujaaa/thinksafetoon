@@ -156,17 +156,6 @@ export default function Menu({ onSelectStory }) {
             <div className="flex items-center justify-center gap-2 mb-1">
               <div className="w-2 h-2 bg-black rounded-full"></div>
               <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Mini game
-              </div>
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-            </div>
-            <Button onClick={handleComicClick}>Mini game</Button>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                 Komik Interaktif
               </div>
               <div className="w-2 h-2 bg-black rounded-full"></div>
@@ -174,6 +163,17 @@ export default function Menu({ onSelectStory }) {
             <Button onClick={handleStartStory}>
               {storyLibrary[0]?.title ?? "Mulai Cerita"}
             </Button>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <div className="w-2 h-2 bg-black rounded-full"></div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                Mini game
+              </div>
+              <div className="w-2 h-2 bg-black rounded-full"></div>
+            </div>
+            <Button onClick={handleComicClick}>Mini game</Button>
           </div>
 
           {/* <div className="space-y-1">
@@ -200,8 +200,7 @@ export default function Menu({ onSelectStory }) {
               PKM RSH 2026 • FMIPA UNNES • ThinkSafeToon
             </p> */}
             <p className="text-[10px] text-gray-400 mt-1">
-              Challenge Based Learning • Mitigasi Bencana • Pendidikan
-              Matematika
+              Challenge Based Learning • Mitigasi Bencana
             </p>
           </div>
         </div>
