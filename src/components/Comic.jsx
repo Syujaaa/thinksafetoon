@@ -257,7 +257,7 @@ const Comic = ({ onBack }) => {
                 z-10
               "
             >
-              Pilih Komik
+              Pilih Mini game
             </h1>
           </div>
 
@@ -285,7 +285,7 @@ const Comic = ({ onBack }) => {
             <div className="absolute -top-2 right-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[12px] border-t-white"></div>
 
             <p className="text-sm sm:text-base md:text-lg text-gray-700 font-medium">
-              Pilih komik interaktif untuk belajar mitigasi bencana
+              Pilih mini game interaktif untuk belajar mitigasi bencana
             </p>
           </div>
         </div>

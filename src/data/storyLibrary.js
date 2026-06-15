@@ -5,7 +5,7 @@ import fireStory from "./fireStory";
 const storyLibrary = [
   {
     id: "intro",
-    title: "Pembukaan Cerita",
+    title: "Komik Interaktif",
     data: story,
   },
   {

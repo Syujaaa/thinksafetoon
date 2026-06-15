@@ -156,18 +156,18 @@ export default function Menu({ onSelectStory }) {
             <div className="flex items-center justify-center gap-2 mb-1">
               <div className="w-2 h-2 bg-black rounded-full"></div>
               <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Komik Interaktif
+                Mini game
               </div>
               <div className="w-2 h-2 bg-black rounded-full"></div>
             </div>
-            <Button onClick={handleComicClick}>Komik</Button>
+            <Button onClick={handleComicClick}>Mini game</Button>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-2 mb-1">
               <div className="w-2 h-2 bg-black rounded-full"></div>
               <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Pembukaan Cerita
+                Komik Interaktif
               </div>
               <div className="w-2 h-2 bg-black rounded-full"></div>
             </div>
@@ -176,7 +176,7 @@ export default function Menu({ onSelectStory }) {
             </Button>
           </div>
 
-          <div className="space-y-1">
+          {/* <div className="space-y-1">
             <div className="flex items-center justify-center gap-2 mb-1">
               <div className="w-2 h-2 bg-black rounded-full"></div>
               <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -185,7 +185,7 @@ export default function Menu({ onSelectStory }) {
               <div className="w-2 h-2 bg-black rounded-full"></div>
             </div>
             <Button onClick={handleKreditClick}>Kredit</Button>
-          </div>
+          </div> */}
         </div>
 
         {/* Panel footer with comic style */}
@@ -196,9 +196,9 @@ export default function Menu({ onSelectStory }) {
               <div className="w-3 h-3 bg-yellow-500 rounded-full border border-black"></div>
               <div className="w-3 h-3 bg-red-500 rounded-full border border-black"></div>
             </div>
-            <p className="text-xs text-gray-500 font-medium">
+            {/* <p className="text-xs text-gray-500 font-medium">
               PKM RSH 2026 • FMIPA UNNES • ThinkSafeToon
-            </p>
+            </p> */}
             <p className="text-[10px] text-gray-400 mt-1">
               Challenge Based Learning • Mitigasi Bencana • Pendidikan
               Matematika
@@ -210,9 +210,9 @@ export default function Menu({ onSelectStory }) {
       {/* Action indicator */}
       <div className="relative z-10 mt-10 animate-bounce-slow">
         <div className="flex flex-col items-center gap-2">
-          <div className="text-sm font-bold text-gray-700 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-black">
+          {/* <div className="text-sm font-bold text-gray-700 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-black">
             🎯 Pilih dan klik untuk memulai!
-          </div>
+          </div> */}
           <div className="flex items-center gap-1">
             <div className="w-1 h-1 bg-black rounded-full animate-ping"></div>
             <div
